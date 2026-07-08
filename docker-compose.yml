@@ -1,0 +1,33 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${DB_NAME:-jobtracker}
+      POSTGRES_USER: ${DB_USERNAME:-jobtracker}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-jobtracker}
+    ports:
+      - "5432:5432"
+    volumes:
+      - jobtracker-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-jobtracker}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/${DB_NAME:-jobtracker}
+      DB_USERNAME: ${DB_USERNAME:-jobtracker}
+      DB_PASSWORD: ${DB_PASSWORD:-jobtracker}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set}
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-86400000}
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  jobtracker-db-data:
