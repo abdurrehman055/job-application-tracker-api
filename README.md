@@ -72,8 +72,10 @@ GitHub Actions (`.github/workflows/ci.yml`) runs `./mvnw verify` against a Postg
 
 Railway builds from the repo's `Dockerfile` (see `railway.json`). Configure these environment variables in the Railway project:
 
-- `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` — pointing at a provisioned Postgres instance (e.g. Railway's Postgres plugin)
+- `DATABASE_URL` — Railway's Postgres plugin provides this automatically (`postgres://user:pass@host:port/db`). A startup `EnvironmentPostProcessor` (`DatabaseUrlEnvironmentPostProcessor`) converts it into the `jdbc:postgresql://...` URL plus separate username/password that Spring's datasource needs — no manual conversion required. Reference it via Railway's variable reference UI (`${{Postgres.DATABASE_URL}}`) or let Railway auto-link it if Postgres is in the same project.
 - `JWT_SECRET` — a strong, unique secret (`openssl rand -base64 32`)
 - `JWT_EXPIRATION_MS` — optional, defaults to 24h
 
 Railway injects `PORT` automatically; the app already binds to it via `server.port=${PORT:8080}`.
+
+For local dev / Docker Compose (no `DATABASE_URL` present), the existing `DB_URL`/`DB_USERNAME`/`DB_PASSWORD` variables are used unchanged.
