@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: jobtracker
+          POSTGRES_USER: jobtracker
+          POSTGRES_PASSWORD: jobtracker
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U jobtracker"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DB_URL: jdbc:postgresql://localhost:5432/jobtracker
+      DB_USERNAME: jobtracker
+      DB_PASSWORD: jobtracker
+      JWT_SECRET: qMNPS68tYwBZfqHsP11Iq/aXaWzjMDowtgaO4HJetyM=
+      JWT_EXPIRATION_MS: 86400000
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Build and test
+        run: ./mvnw -B verify
